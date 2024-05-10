@@ -18,6 +18,7 @@ app = Flask(__name__)
 
 initialize_firebase()
 
+# 使用固定的访问令牌和密钥
 configuration = Configuration(access_token='7biRawnBMOp3JyWIGzD871MVN2ybSYqZ41Dbhr1e8JBq4z6r0w4RNAEfApWRwdWjoSJliOdPThve2hgX2OK3PWOM48Grs9F4rCT7Hvd0IU3eQKsJ3CW/K5qYXOuCw9Rj2q9oEGEpWnC2c9wzz60SaAdB04t89/1O/w1cDnyilFU=')
 handler = WebhookHandler('8057f2e5cc3db80ebc636a3c235d12c7')
 
@@ -73,3 +74,4 @@ def handle_message(event):
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
+
