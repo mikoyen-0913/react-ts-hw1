@@ -69,7 +69,7 @@ def handle_message(event):
                              "新增餐廳: add [餐廳名稱]\n"
                              "刪除餐廳: remove [餐廳名稱]\n"
                              "取得餐廳列表: get\n"
-                             "搜尋餐廳: search [關鍵字]")
+                             )
 
     line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
