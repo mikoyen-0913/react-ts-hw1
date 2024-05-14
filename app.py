@@ -64,6 +64,13 @@ def handle_message(event):
             restaurants_ref = db.reference(f"users/{user_id}/restaurants")
             restaurants = restaurants_ref.get() or {}
             response_text = f"您的餐廳列表: {', '.join(restaurants.keys())}"
+        elif command == 'search':
+            search_query = args[1]
+            restaurants_ref = db.reference(f"users/{user_id}/restaurants")
+            all_restaurants = restaurants_ref.get() or {}
+            matched_restaurants = {name: True for name in all_restaurants if
+                                   search_query in name}
+            response_text = f"搜尋結果: {', '.join(matched_restaurants.keys())}"
 
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
