@@ -64,15 +64,14 @@ def handle_message(event):
             restaurants_ref = db.reference(f"users/{user_id}/restaurants")
             restaurants = restaurants_ref.get() or {}
             response_text = f"您的餐廳列表: {', '.join(restaurants.keys())}"
-        elif command == 'search':
-            search_query = args[1]
-            restaurants_ref = db.reference(f"users/{user_id}/restaurants")
-            all_restaurants = restaurants_ref.get() or {}
-            matched_restaurants = {name: True for name in all_restaurants if
-                                   search_query in name}
-            response_text = f"搜尋結果: {', '.join(matched_restaurants.keys())}"
+        elif command == 'help':
+            response_text = ("使用說明:\n"
+                             "新增餐廳: add [餐廳名稱]\n"
+                             "刪除餐廳: remove [餐廳名稱]\n"
+                             "取得餐廳列表: get\n"
+                             "搜尋餐廳: search [關鍵字]")
 
-        line_bot_api.reply_message_with_http_info(
+    line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
                 messages=[TextMessage(text=response_text)]
