@@ -72,11 +72,12 @@ def handle_message(event):
                              )
         elif command == 'search':
             search_query = args[1]
-        restaurants_ref = db.reference(f"users/{user_id}/restaurants")
-        all_restaurants = restaurants_ref.get() or {}
-        matched_restaurants = {name: True for name in all_restaurants if
+            restaurants_ref = db.reference(f"users/{user_id}/restaurants")
+            all_restaurants = restaurants_ref.get() or {}
+            matched_restaurants = {name: True for name in all_restaurants if
                                search_query in name}
-        response_text = f"搜尋結果: {', '.join(matched_restaurants.keys())}"
+            response_text = f"搜尋結果: {', '.join(matched_restaurants.keys())}"
+
 
     line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
