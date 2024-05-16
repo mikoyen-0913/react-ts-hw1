@@ -51,15 +51,21 @@ def handle_message(event):
         command = args[0].lower()
 
         if command == 'add':
-            restaurants = args[1:]
-            for restaurant in restaurants:
-                db.reference(f"users/{user_id}/restaurants/{restaurant}").set(True)
-            response_text = f"已添加餐廳: {', '.join(restaurants)}"
+            if len(args) > 1:
+                restaurants = args[1:]
+                for restaurant in restaurants:
+                    db.reference(f"users/{user_id}/restaurants/{restaurant}").set(True)
+                response_text = f"已添加餐廳: {', '.join(restaurants)}"
+            else:
+                response_text = "請提供要添加的餐廳名稱。"
         elif command == 'remove':
-            restaurants = args[1:]
-            for restaurant in restaurants:
-                db.reference(f"users/{user_id}/restaurants/{restaurant}").delete()
-            response_text = f"已移除餐廳: {', '.join(restaurants)}"
+            if len(args) > 1:
+                restaurants = args[1:]
+                for restaurant in restaurants:
+                    db.reference(f"users/{user_id}/restaurants/{restaurant}").delete()
+                response_text = f"已移除餐廳: {', '.join(restaurants)}"
+            else:
+                response_text = "請提供要移除的餐廳名稱。"
         elif command == 'get':
             restaurants_ref = db.reference(f"users/{user_id}/restaurants")
             restaurants = restaurants_ref.get() or {}
@@ -69,17 +75,20 @@ def handle_message(event):
                              "新增餐廳: add [餐廳名稱]\n"
                              "刪除餐廳: remove [餐廳名稱]\n"
                              "取得餐廳列表: get\n"
-                             )
+                             "搜尋餐廳: search [關鍵詞]\n")
         elif command == 'search':
-            search_query = args[1]
-            restaurants_ref = db.reference(f"users/{user_id}/restaurants")
-            all_restaurants = restaurants_ref.get() or {}
-            matched_restaurants = {name: True for name in all_restaurants if
-                               search_query in name}
-            response_text = f"搜尋結果: {', '.join(matched_restaurants.keys())}"
+            if len(args) > 1:
+                search_query = args[1]
+                restaurants_ref = db.reference(f"users/{user_id}/restaurants")
+                all_restaurants = restaurants_ref.get() or {}
+                matched_restaurants = {name: True for name in all_restaurants if search_query in name}
+                response_text = f"搜尋結果: {', '.join(matched_restaurants.keys())}"
+            else:
+                response_text = "請提供搜尋關鍵詞。"
+        else:
+            response_text = "未知指令。請輸入 'help' 來獲取使用說明。"
 
-
-    line_bot_api.reply_message_with_http_info(
+        line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
                 messages=[TextMessage(text=response_text)]
