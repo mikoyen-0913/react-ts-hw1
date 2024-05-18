@@ -9,16 +9,20 @@ from linebot.v3.messaging.models import TextMessage
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
-print("Python 版本:", sys.version)
-print("系統路徑:", sys.path)
+import requests
 
-from firebase_setup import initialize_firebase
+# 定義您的 Google Maps API 金鑰
+GOOGLE_MAPS_API_KEY = '您的 Google Maps API 金鑰'
+
+# Firebase 初始化
+cred = credentials.Certificate('path/to/serviceAccountKey.json')
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://your-database-name.firebaseio.com'
+})
 
 app = Flask(__name__)
 
-initialize_firebase()
-
-# 使用固定的访问令牌和密钥
+# 初始化 Line Bot 相關物件
 configuration = Configuration(access_token='7biRawnBMOp3JyWIGzD871MVN2ybSYqZ41Dbhr1e8JBq4z6r0w4RNAEfApWRwdWjoSJliOdPThve2hgX2OK3PWOM48Grs9F4rCT7Hvd0IU3eQKsJ3CW/K5qYXOuCw9Rj2q9oEGEpWnC2c9wzz60SaAdB04t89/1O/w1cDnyilFU=')
 handler = WebhookHandler('8057f2e5cc3db80ebc636a3c235d12c7')
 
@@ -32,19 +36,14 @@ def favicon():
 
 @app.route("/callback", methods=['POST'])
 def callback():
-    簽名 = request.headers['X-Line-Signature']
-    請求內容 = request.get_data(as_text=True)
+    signature = request.headers['X-Line-Signature']
+    body = request.get_data(as_text=True)
 
     try:
-        handler.handle(請求內容, 簽名)
+        handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
     return 'OK'
-
-import requests
-
-# 定義您的 Google Maps API 金鑰
-GOOGLE_MAPS_API_KEY = '您的 Google Maps API 金鑰'
 
 # 從 Google Maps API 獲取餐廳詳細資訊的函式
 def get_restaurant_details(name):
@@ -85,7 +84,7 @@ def handle_message(event):
                     })
                     response_text = f"已添加餐廳: {name}\n地址: {address}\n電話: {phone_number}"
                 else:
-                    # 透過手動輸入獲取餐廳地址和電話
+                    # 如果從 Google Maps API 無法獲取相關資訊，請使用者手動輸入
                     address_input = input("請輸入餐廳地址：")
                     phone_input = input("請輸入餐廳電話：")
 
@@ -128,6 +127,7 @@ def handle_message(event):
         else:
             response_text = "未知指令。請輸入 'help' 來獲取使用說明。"
 
+        # 回覆使用者訊息
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
