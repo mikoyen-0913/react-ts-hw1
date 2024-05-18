@@ -12,7 +12,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import requests
 
 # 定義您的 Google Maps API 金鑰
-GOOGLE_MAPS_API_KEY = '您的 Google Maps API 金鑰'
+GOOGLE_MAPS_API_KEY = 'AIzaSyD64_r4n-mkV9z6P7nhMZ--yRJG-FpnQVg'
 
 # Firebase 初始化
 cred = credentials.Certificate('path/to/serviceAccountKey.json')
