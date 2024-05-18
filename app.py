@@ -12,7 +12,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import requests
 
 # 定義您的 Google Maps API 金鑰
-GOOGLE_MAPS_API_KEY = 'AIzaSyD5sX433QilH8IVyjPiIpqqzJAy_dZrLvE'
+GOOGLE_MAPS_API_KEY = 'AIzaSyD64_r4n-mkV9z6P7nhMZ--yRJG-FpnQVg'
 
 print("Python 版本:", sys.version)
 print("系統路徑:", sys.path)
