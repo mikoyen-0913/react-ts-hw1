@@ -9,20 +9,16 @@ from linebot.v3.messaging.models import TextMessage
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
-import requests
+print("Python 版本:", sys.version)
+print("系統路徑:", sys.path)
 
-# 定義您的 Google Maps API 金鑰
-GOOGLE_MAPS_API_KEY = 'AIzaSyD64_r4n-mkV9z6P7nhMZ--yRJG-FpnQVg'
-
-# Firebase 初始化
-cred = credentials.Certificate('path/to/serviceAccountKey.json')
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://your-database-name.firebaseio.com'
-})
+from firebase_setup import initialize_firebase
 
 app = Flask(__name__)
 
-# 初始化 Line Bot 相關物件
+initialize_firebase()
+
+# 使用固定的访问令牌和密钥
 configuration = Configuration(access_token='7biRawnBMOp3JyWIGzD871MVN2ybSYqZ41Dbhr1e8JBq4z6r0w4RNAEfApWRwdWjoSJliOdPThve2hgX2OK3PWOM48Grs9F4rCT7Hvd0IU3eQKsJ3CW/K5qYXOuCw9Rj2q9oEGEpWnC2c9wzz60SaAdB04t89/1O/w1cDnyilFU=')
 handler = WebhookHandler('8057f2e5cc3db80ebc636a3c235d12c7')
 
@@ -36,65 +32,30 @@ def favicon():
 
 @app.route("/callback", methods=['POST'])
 def callback():
-    signature = request.headers['X-Line-Signature']
-    body = request.get_data(as_text=True)
+    簽名 = request.headers['X-Line-Signature']
+    請求內容 = request.get_data(as_text=True)
 
     try:
-        handler.handle(body, signature)
+        handler.handle(請求內容, 簽名)
     except InvalidSignatureError:
         abort(400)
     return 'OK'
-
-# 從 Google Maps API 獲取餐廳詳細資訊的函式
-def get_restaurant_details(name):
-    url = f'https://maps.googleapis.com/maps/api/place/findplacefromtext/json'
-    params = {
-        'input': name,
-        'inputtype': 'textquery',
-        'fields': 'name,formatted_address,formatted_phone_number',
-        'key': GOOGLE_MAPS_API_KEY
-    }
-    response = requests.get(url, params=params)
-    data = response.json()
-    if 'candidates' in data and data['candidates']:
-        candidate = data['candidates'][0]
-        return candidate.get('name'), candidate.get('formatted_address'), candidate.get('formatted_phone_number')
-    return None, None, None
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
-        user_id = event.source.user_id  # 獲取使用者 ID
+        user_id = event.source.user_id  # 獲取發送訊息的用戶 ID
         text = event.message.text
         args = text.split()
         command = args[0].lower()
 
         if command == 'add':
             if len(args) > 1:
-                restaurant_name = args[1]
-                # 從 Google Maps API 獲取詳細資訊
-                name, address, phone_number = get_restaurant_details(restaurant_name)
-                if name:
-                    # 將詳細資訊存儲在 Firebase 中
-                    db.reference(f"users/{user_id}/restaurants/{restaurant_name}").set({
-                        'name': name,
-                        'address': address,
-                        'phone_number': phone_number
-                    })
-                    response_text = f"已添加餐廳: {name}\n地址: {address}\n電話: {phone_number}"
-                else:
-                    # 如果從 Google Maps API 無法獲取相關資訊，請使用者手動輸入
-                    address_input = input("請輸入餐廳地址：")
-                    phone_input = input("請輸入餐廳電話：")
-
-                    # 將餐廳名稱、地址和電話存儲在 Firebase 中
-                    db.reference(f"users/{user_id}/restaurants/{restaurant_name}").set({
-                        'name': restaurant_name,
-                        'address': address_input,
-                        'phone_number': phone_input
-                    })
-                    response_text = f"已添加餐廳: {restaurant_name}\n地址: {address_input}\n電話: {phone_input}"
+                restaurants = args[1:]
+                for restaurant in restaurants:
+                    db.reference(f"users/{user_id}/restaurants/{restaurant}").set(True)
+                response_text = f"已添加餐廳: {', '.join(restaurants)}"
             else:
                 response_text = "請提供要添加的餐廳名稱。"
         elif command == 'remove':
@@ -127,7 +88,6 @@ def handle_message(event):
         else:
             response_text = "未知指令。請輸入 'help' 來獲取使用說明。"
 
-        # 回覆使用者訊息
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
