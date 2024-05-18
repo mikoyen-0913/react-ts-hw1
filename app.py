@@ -9,11 +9,6 @@ from linebot.v3.messaging.models import TextMessage
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
-import requests
-
-# 定義您的 Google Maps API 金鑰
-GOOGLE_MAPS_API_KEY = 'AIzaSyD64_r4n-mkV9z6P7nhMZ--yRJG-FpnQVg'
-
 print("Python 版本:", sys.version)
 print("系統路徑:", sys.path)
 
@@ -45,6 +40,11 @@ def callback():
     except InvalidSignatureError:
         abort(400)
     return 'OK'
+
+import requests
+
+# 定義您的 Google Maps API 金鑰
+GOOGLE_MAPS_API_KEY = '您的 Google Maps API 金鑰'
 
 # 從 Google Maps API 獲取餐廳詳細資訊的函式
 def get_restaurant_details(name):
@@ -86,6 +86,17 @@ def handle_message(event):
                     response_text = f"已添加餐廳: {name}\n地址: {address}\n電話: {phone_number}"
                 else:
                     response_text = "找不到相關餐廳資訊。"
+                    # 透過手動輸入獲取餐廳地址和電話
+                    address_input = input("請輸入餐廳地址：")
+                    phone_input = input("請輸入餐廳電話：")
+
+                    # 將餐廳名稱、地址和電話存儲在 Firebase 中
+                    db.reference(f"users/{user_id}/restaurants/{restaurant_name}").set({
+                        'name': restaurant_name,
+                        'address': address_input,
+                        'phone_number': phone_input
+                    })
+                    response_text = f"已添加餐廳: {restaurant_name}\n地址: {address_input}\n電話: {phone_input}"
             else:
                 response_text = "請提供要添加的餐廳名稱。"
         elif command == 'remove':
