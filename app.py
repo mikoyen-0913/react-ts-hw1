@@ -85,7 +85,6 @@ def handle_message(event):
                     })
                     response_text = f"已添加餐廳: {name}\n地址: {address}\n電話: {phone_number}"
                 else:
-                    response_text = "找不到相關餐廳資訊。"
                     # 透過手動輸入獲取餐廳地址和電話
                     address_input = input("請輸入餐廳地址：")
                     phone_input = input("請輸入餐廳電話：")
