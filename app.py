@@ -9,6 +9,11 @@ from linebot.v3.messaging.models import TextMessage
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
+import requests
+
+# 定義您的 Google Maps API 金鑰
+GOOGLE_MAPS_API_KEY = 'AIzaSyD5sX433QilH8IVyjPiIpqqzJAy_dZrLvE'
+
 print("Python 版本:", sys.version)
 print("系統路徑:", sys.path)
 
@@ -41,21 +46,46 @@ def callback():
         abort(400)
     return 'OK'
 
+# 從 Google Maps API 獲取餐廳詳細資訊的函式
+def get_restaurant_details(name):
+    url = f'https://maps.googleapis.com/maps/api/place/findplacefromtext/json'
+    params = {
+        'input': name,
+        'inputtype': 'textquery',
+        'fields': 'name,formatted_address,formatted_phone_number',
+        'key': GOOGLE_MAPS_API_KEY
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    if 'candidates' in data and data['candidates']:
+        candidate = data['candidates'][0]
+        return candidate.get('name'), candidate.get('formatted_address'), candidate.get('formatted_phone_number')
+    return None, None, None
+
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
-        user_id = event.source.user_id  # 獲取發送訊息的用戶 ID
+        user_id = event.source.user_id  # 獲取使用者 ID
         text = event.message.text
         args = text.split()
         command = args[0].lower()
 
         if command == 'add':
             if len(args) > 1:
-                restaurants = args[1:]
-                for restaurant in restaurants:
-                    db.reference(f"users/{user_id}/restaurants/{restaurant}").set(True)
-                response_text = f"已添加餐廳: {', '.join(restaurants)}"
+                restaurant_name = args[1]
+                # 從 Google Maps API 獲取詳細資訊
+                name, address, phone_number = get_restaurant_details(restaurant_name)
+                if name:
+                    # 將詳細資訊存儲在 Firebase 中
+                    db.reference(f"users/{user_id}/restaurants/{restaurant_name}").set({
+                        'name': name,
+                        'address': address,
+                        'phone_number': phone_number
+                    })
+                    response_text = f"已添加餐廳: {name}\n地址: {address}\n電話: {phone_number}"
+                else:
+                    response_text = "找不到相關餐廳資訊。"
             else:
                 response_text = "請提供要添加的餐廳名稱。"
         elif command == 'remove':
