@@ -50,7 +50,7 @@ def handle_message(event):
         args = text.split()
         command = args[0].lower()
 
-        if text == '查看收藏餐廳':
+        if text == '查看喜愛餐廳':
             # 查詢 Firebase 中用戶收藏的餐廳
             restaurants_ref = db.reference(f"users/{user_id}/restaurants")
             restaurants = restaurants_ref.get() or {}
