@@ -2,6 +2,7 @@ import sys
 import firebase_admin
 from firebase_admin import credentials, db
 from flask import Flask, request, abort
+
 from linebot.v3 import WebhookHandler
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest
 from linebot.v3.messaging.models import TextMessage
@@ -11,7 +12,6 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 print("Python 版本:", sys.version)
 print("系統路徑:", sys.path)
 
-# 從 firebase_setup 導入 initialize_firebase
 from firebase_setup import initialize_firebase
 
 app = Flask(__name__)
@@ -50,30 +50,16 @@ def handle_message(event):
         args = text.split()
         command = args[0].lower()
 
-        if text == '查看喜愛餐廳':
-            # 查詢 Firebase 中用戶收藏的餐廳
-            restaurants_ref = db.reference(f"users/{user_id}/restaurants")
-            restaurants = restaurants_ref.get() or {}
-            if restaurants:
-                response_text = f"您的餐廳列表: {', '.join(restaurants.keys())}"
-            else:
-                response_text = "您還沒有收藏任何餐廳。"
-        elif command == 'add':
-            if len(args) > 1:
-                restaurants = args[1:]
-                for restaurant in restaurants:
-                    db.reference(f"users/{user_id}/restaurants/{restaurant}").set(True)
-                response_text = f"已添加餐廳: {', '.join(restaurants)}"
-            else:
-                response_text = "請提供要添加的餐廳名稱。"
+        if command == 'add':
+            restaurants = args[1:]
+            for restaurant in restaurants:
+                db.reference(f"users/{user_id}/restaurants/{restaurant}").set(True)
+            response_text = f"已添加餐廳: {', '.join(restaurants)}"
         elif command == 'remove':
-            if len(args) > 1:
-                restaurants = args[1:]
-                for restaurant in restaurants:
-                    db.reference(f"users/{user_id}/restaurants/{restaurant}").delete()
-                response_text = f"已移除餐廳: {', '.join(restaurants)}"
-            else:
-                response_text = "請提供要移除的餐廳名稱。"
+            restaurants = args[1:]
+            for restaurant in restaurants:
+                db.reference(f"users/{user_id}/restaurants/{restaurant}").delete()
+            response_text = f"已移除餐廳: {', '.join(restaurants)}"
         elif command == 'get':
             restaurants_ref = db.reference(f"users/{user_id}/restaurants")
             restaurants = restaurants_ref.get() or {}
@@ -83,20 +69,16 @@ def handle_message(event):
                              "新增餐廳: add [餐廳名稱]\n"
                              "刪除餐廳: remove [餐廳名稱]\n"
                              "取得餐廳列表: get\n"
-                             "搜尋餐廳: search [關鍵詞]\n")
+                             )
         elif command == 'search':
-            if len(args) > 1:
-                search_query = args[1]
-                restaurants_ref = db.reference(f"users/{user_id}/restaurants")
-                all_restaurants = restaurants_ref.get() or {}
-                matched_restaurants = {name: True for name in all_restaurants if search_query in name}
-                response_text = f"搜尋結果: {', '.join(matched_restaurants.keys())}"
-            else:
-                response_text = "請提供搜尋關鍵詞。"
-        else:
-            response_text = "未知指令。請輸入 'help' 來獲取使用說明。"
+            search_query = args[1]
+        restaurants_ref = db.reference(f"users/{user_id}/restaurants")
+        all_restaurants = restaurants_ref.get() or {}
+        matched_restaurants = {name: True for name in all_restaurants if
+                               search_query in name}
+        response_text = f"搜尋結果: {', '.join(matched_restaurants.keys())}"
 
-        line_bot_api.reply_message_with_http_info(
+    line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
                 messages=[TextMessage(text=response_text)]
@@ -105,3 +87,4 @@ def handle_message(event):
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
+
